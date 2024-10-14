@@ -1,0 +1,150 @@
+<html>
+  <head>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  </head>
+  <body>
+    <div>
+      <button onclick="start()">Start playing</button>
+      <button onclick="stop()">Stop playing</button>
+    </div>
+    <script>
+      let window_id;
+      let playing = false;
+      let gameTimer;
+      let bc = new BroadcastChannel("game");
+      let birdWindow;
+      let pipe1Window;
+      let pipe2Window;
+
+      let pipeY2 = screen.availHeight - 400;
+
+      let pipeYGap = 400;
+
+      let birdY = screen.availHeight / 2;
+      let birdVelocity = 0;
+      const gravity = 0.5;
+      const jumpS = -8;
+
+      const pipeWidth = screen.availWidth / 12;
+      const pipeGap = screen.availWidth / 3;
+      let pipeX = screen.availWidth - pipeWidth;
+      let pipeY = Math.random() * (screen.availHeight - pipeGap - 100) + 50;
+
+      const birdWidth = pipeWidth;
+      const birdHeight = pipeWidth;
+
+      let score = 0;
+      let gameOver = false;
+
+      let pipeHeight1 =
+        Math.random() * (screen.availHeight - pipeYGap - 100) + 50;
+
+      bc.onmessage = (event) => {
+        if (event.data === "stop") {
+          bc.close();
+          window.close();
+        } else if (event.data === "jump") jump();
+
+        if (event.data.startsWith("update"))
+          updateFromEvent(event.data.slice(6));
+      };
+
+      const reset = () => {};
+
+      const start = () => {
+        console.log("Starting");
+        updateState(true);
+        setTimeout(runGame, 1000);
+        setTimeout(stop, 20000);
+      };
+
+      const stop = () => {
+        clearInterval(gameTimer);
+        bc.postMessage("stop");
+      };
+
+      const runGame = () => {
+        gameTimer = setInterval(updateState, 1000 / 30);
+      };
+
+      const updateState = (init = false) => {
+        updateGame();
+        if (gameOver && birdY - birdHeight >= screen.availHeight) stop();
+
+        if (init) {
+          birdWindow = window.open(
+            `/bird.html#${0},${0},${birdY},${birdWidth},${birdHeight}`,
+            0,
+            "popup"
+          );
+          pipe1Window = window.open(
+            `/pipe.html#${1},${
+              screen.availWidth - pipeWidth
+            },${0},${pipeWidth},${400}`,
+            1,
+            "popup"
+          );
+          pipe2Window = window.open(
+            `/pipe.html#${2},${screen.availWidth - pipeWidth},${
+              screen.availHeight - 400
+            },${pipeWidth},${400}`,
+            2,
+            "popup"
+          );
+          //}
+          return;
+        } else {
+          bc.postMessage(
+            `update${0},${birdWidth},${birdY},${birdWidth},${birdHeight}`
+          );
+          bc.postMessage(`update${1},${pipeX},0,${pipeWidth},${pipeHeight1}`);
+          bc.postMessage(
+            `update${2},${pipeX},${pipeHeight1 + pipeYGap},${pipeWidth},${
+              screen.availHeight - pipeHeight1 - pipeYGap
+            }`
+          );
+        }
+      };
+
+      const updateGame = () => {
+        birdVelocity += gravity;
+        birdY += birdVelocity;
+
+        if (gameOver) return;
+
+        pipeX -= 10;
+        if (pipeX + pipeWidth < 0) {
+          pipeX = screen.availWidth;
+          pipeY = Math.random() * (screen.availHeight - pipeGap - 100) + 50;
+          score++;
+        }
+
+        if (birdY <= 0 || birdY + birdHeight > screen.availHeight) {
+          gameOver = true;
+          console.log("Bird die from hitting border");
+          return;
+        }
+
+        if (
+          birdWidth * 2 > pipeX &&
+          (birdY < pipeHeight1 || birdY + birdHeight > pipeHeight1 + pipeYGap)
+        ) {
+          gameOver = true;
+          console.log("Hit a pipe");
+          return;
+        }
+      };
+
+      const jump = () => {
+        if (gameOver) return;
+        birdVelocity = -8;
+        birdWindow.focus();
+        pipe1Window.focus();
+        pipe2Window.focus();
+      };
+
+      document.addEventListener("keydown", jump);
+      document.addEventListener("click", jump);
+    </script>
+  </body>
+</html>

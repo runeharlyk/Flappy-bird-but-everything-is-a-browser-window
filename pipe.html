@@ -1,0 +1,54 @@
+<html>
+  <head>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <style>
+      body {
+        background-image: url("pipe.png");
+        overflow: hidden;
+        background-repeat: no-repeat;
+        background-size: auto;
+        background-size: 100%;
+        width: 100%;
+        height: 100%;
+      }
+    </style>
+  </head>
+  <body>
+    <script>
+      let window_id;
+      const bc = new BroadcastChannel("game");
+
+      const update = (mess) => {
+        const [id, x, y, width, height] = mess.split(",").map(Number);
+
+        window_id ||= id;
+        if (window_id !== id) return;
+        if (width && height) window.resizeTo(width, height);
+        window.moveTo(x, y);
+      };
+
+      update(window.location.hash.slice(1));
+
+      bc.onmessage = (event) => {
+        if (event.data == "stop") stop();
+        if (event.data.startsWith("update")) update(event.data.slice(6));
+      };
+
+      const stop = () => {
+        bc.close();
+        window.close();
+      };
+
+      document.addEventListener("keydown", () => () => {
+        bc.postMessage("jump");
+        console.log("Keydown", "jumping");
+      });
+
+      document.addEventListener("click", () => {
+        console.log("click", "jumping");
+
+        bc.postMessage("jump");
+      });
+    </script>
+  </body>
+</html>
