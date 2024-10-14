@@ -27,19 +27,22 @@
     </style>
   </head>
   <body>
-    <img src="test.jpg" id="background" />
+    <img src="background.jpg" id="background" />
     <img src="pipe.png" class="item" />
     <script>
       let window_id;
       const bc = new BroadcastChannel("game");
 
       const background = document.getElementById("background");
-      let id, x, y, width, height, parentWidth, parentHeight, bookmarkBar;
+      let id, x, y, width, height, parentWidth, parentHeight, _bookmarkBar;
+
+      let bookmarkBar;
 
       const update = (mess) => {
-        [id, x, y, width, height, parentWidth, parentHeight, bookmarkBar] = mess
-          .split(",")
-          .map(Number);
+        [id, x, y, width, height, parentWidth, parentHeight, _bookmarkBar] =
+          mess.split(",").map(Number);
+
+        bookmarkBar ??= _bookmarkBar;
 
         window_id ??= id;
         if (window_id !== id) return;
@@ -50,12 +53,14 @@
 
       const updateBackground = () => {
         background.style.width = parentWidth + "px";
-        background.style.height = parentWidth + "px";
+        background.style.height = parentHeight + "px";
         background.style.top = -screenTop + bookmarkBar - 67 + "px";
         background.style.left = -screenLeft + "px";
       };
 
       update(window.location.hash.slice(1));
+      if (id % 2)
+        document.querySelector(".item").style.transform = "rotate(0.5turn)";
 
       bc.onmessage = (event) => {
         if (event.data == "stop") stop();
@@ -77,6 +82,8 @@
 
         bc.postMessage("jump");
       });
+
+      window.addEventListener("resize", updateBackground, false);
     </script>
   </body>
 </html>
