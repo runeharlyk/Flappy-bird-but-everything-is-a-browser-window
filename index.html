@@ -1,8 +1,26 @@
 <html>
   <head>
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <style>
+      body {
+        padding: 0;
+        margin: 0;
+        /* background-image: url("background.jpg"); */
+        overflow: hidden;
+        /* background-repeat: no-repeat;
+        background-size: auto;
+        background-size: 100%; */
+        width: 100vw;
+        height: 100vh;
+      }
+      #background {
+        position: absolute;
+        z-index: -10;
+      }
+    </style>
   </head>
   <body>
+    <img src="test.jpg" id="background" />
     <div>
       <button onclick="start()">Start playing</button>
       <button onclick="stop()">Stop playing</button>
@@ -12,9 +30,13 @@
       let playing = false;
       let gameTimer;
       let bc = new BroadcastChannel("game");
+      const background = document.getElementById("background");
       let birdWindow;
       let pipe1Window;
       let pipe2Window;
+
+      const bookmarkBar =
+        screen.availHeight - document.activeElement.clientHeight;
 
       let pipeY2 = screen.availHeight - 400;
 
@@ -23,7 +45,8 @@
       let birdY = screen.availHeight / 2;
       let birdVelocity = 0;
       const gravity = 0.5;
-      const jumpS = -8;
+      const jumpS = -40;
+      const pipeSpeed = 10;
 
       const pipeWidth = screen.availWidth / 12;
       const pipeGap = screen.availWidth / 3;
@@ -49,13 +72,22 @@
           updateFromEvent(event.data.slice(6));
       };
 
+      const updateBackground = (x, y) => {
+        background.style.width = innerWidth + "px";
+        background.style.height = innerHeight + "px";
+        background.style.top = -window.screenTop + "px";
+        background.style.left = -window.screenLeft + "px";
+      };
+
+      updateBackground();
+
       const reset = () => {};
 
       const start = () => {
         console.log("Starting");
         updateState(true);
         setTimeout(runGame, 1000);
-        setTimeout(stop, 20000);
+        // setTimeout(stop, 20000);
       };
 
       const stop = () => {
@@ -69,25 +101,28 @@
 
       const updateState = (init = false) => {
         updateGame();
-        if (gameOver && birdY - birdHeight >= screen.availHeight) stop();
+        if (gameOver && birdY + birdHeight - 100 >= screen.availHeight) {
+          //   stop();
+          return;
+        }
 
         if (init) {
           birdWindow = window.open(
-            `/bird.html#${0},${0},${birdY},${birdWidth},${birdHeight}`,
+            `/bird.html#${0},${0},${birdY},${birdWidth},${birdHeight},${innerWidth},${innerHeight},${bookmarkBar}`,
             0,
             "popup"
           );
           pipe1Window = window.open(
             `/pipe.html#${1},${
               screen.availWidth - pipeWidth
-            },${0},${pipeWidth},${400}`,
+            },${0},${pipeWidth},${400},${innerWidth},${innerHeight},${bookmarkBar}`,
             1,
             "popup"
           );
           pipe2Window = window.open(
             `/pipe.html#${2},${screen.availWidth - pipeWidth},${
               screen.availHeight - 400
-            },${pipeWidth},${400}`,
+            },${pipeWidth},${400},${innerWidth},${innerHeight},${bookmarkBar}`,
             2,
             "popup"
           );
@@ -110,13 +145,20 @@
         birdVelocity += gravity;
         birdY += birdVelocity;
 
+        if (birdY + birdHeight > screen.availHeight) {
+          birdVelocity = 0;
+          birdY = screen.availHeight;
+        }
+
         if (gameOver) return;
 
-        pipeX -= 10;
-        if (pipeX + pipeWidth < 0) {
-          pipeX = screen.availWidth;
-          pipeY = Math.random() * (screen.availHeight - pipeGap - 100) + 50;
+        pipeX -= pipeSpeed;
+        if (pipeX < 0) {
+          pipeX = screen.availWidth - pipeWidth;
+          pipeY = Math.random() * (screen.availHeight - pipeYGap - 100) + 50;
           score++;
+          pipeHeight1 =
+            Math.random() * (screen.availHeight - pipeYGap - 100) + 50;
         }
 
         if (birdY <= 0 || birdY + birdHeight > screen.availHeight) {
