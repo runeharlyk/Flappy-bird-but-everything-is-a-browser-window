@@ -17,13 +17,39 @@
         position: absolute;
         z-index: -10;
       }
+      .image-button {
+        background: none;
+        color: inherit;
+        border: none;
+        padding: 0;
+        font: inherit;
+        cursor: pointer;
+        outline: inherit;
+      }
+
+      .menu-card {
+        position: absolute;
+        width: 20vw;
+        left: calc(50vw - 10vw);
+        top: 30vh;
+        display: flex;
+        flex-direction: column;
+        gap: 20px;
+      }
+
+      body.playing > .title-card {
+        display: none;
+      }
     </style>
   </head>
   <body>
     <img src="background.jpg" id="background" />
-    <div>
-      <button onclick="start()">Start playing</button>
-      <button onclick="stop()">Stop playing</button>
+    <div class="menu-card title-card">
+      <img src="title_sprite.png" />
+
+      <button onclick="start()" class="image-button">
+        <img src="play_button_sprite.png" />
+      </button>
     </div>
     <script>
       let window_id;
@@ -84,7 +110,7 @@
       const reset = () => {};
 
       const start = () => {
-        console.log("Starting");
+        document.body.classList.add("playing");
         updateState(true);
         setTimeout(runGame, 1000);
         // setTimeout(stop, 20000);
@@ -102,25 +128,26 @@
       const updateState = (init = false) => {
         updateGame();
         if (gameOver && birdY + birdHeight - 100 >= screen.availHeight) {
+          document.body.classList.remove("playing");
           //   stop();
           return;
         }
 
         if (init) {
           birdWindow = window.open(
-            `/bird.html#${0},${0},${birdY},${birdWidth},${birdHeight},${innerWidth},${innerHeight},${bookmarkBar}`,
+            `bird.html#${0},${0},${birdY},${birdWidth},${birdHeight},${innerWidth},${innerHeight},${bookmarkBar}`,
             0,
             "popup"
           );
           pipe1Window = window.open(
-            `/pipe.html#${1},${
+            `pipe.html#${1},${
               screen.availWidth - pipeWidth
             },${0},${pipeWidth},${400},${innerWidth},${innerHeight},${bookmarkBar}`,
             1,
             "popup"
           );
           pipe2Window = window.open(
-            `/pipe.html#${2},${screen.availWidth - pipeWidth},${
+            `pipe.html#${2},${screen.availWidth - pipeWidth},${
               screen.availHeight - 400
             },${pipeWidth},${400},${innerWidth},${innerHeight},${bookmarkBar}`,
             2,
